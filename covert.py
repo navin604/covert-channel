@@ -7,6 +7,28 @@ from scapy.layers.inet import UDP
 ADDRESS = "127.0.0.1"
 PORT = 8080
 
+
+def main(mode, file):
+    mode_str = "SERVER" if mode else "CLIENT"
+    print("-----CONFIG-----")
+    print(f"MODE: {mode_str}")
+    print(f"FILE: {file}")
+    print(f"ADDRESS: {ADDRESS}")
+    print(f"PORT: {PORT}")
+    print("----------------")
+    if mode:
+        server(file)
+    else:
+        client(file)
+
+def server():
+    pass
+
+
+def client():
+    pass
+
+
 def usage():
     txt = """\nWelcome! Usage instructions can be seen below."""
     print(txt)
@@ -44,3 +66,4 @@ def process_args(argv):
 
 if __name__ == "__main__":
     mode, file = process_args(sys.argv[1:])
+    main(mode, file)
