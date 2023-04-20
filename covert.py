@@ -1,6 +1,7 @@
 import socket
 import getopt
 import sys
+from scapy.layers.inet import UDP
 
 # ADDRESS & PORT are only modified in process_args()
 ADDRESS = "127.0.0.1"
@@ -15,9 +16,11 @@ def usage():
 
 
 def process_args(argv):
+    global ADDRESS
+    global PORT
     SERVER_MODE = False
     try:
-        opts, args = getopt.getopt(argv, "h", ["help", "server", "client"])
+        opts, args = getopt.getopt(argv, "h", ["help", "server", "ip=", "port=", "file="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err)  # will print something like "option -a not recognized"
@@ -28,11 +31,16 @@ def process_args(argv):
             usage()
         elif o == "--server":
             SERVER_MODE = True
+        elif o == "--ip":
+            ADDRESS = a
+        elif o == "--port":
+            PORT = a
+        elif o == "--file":
+            file = a
         else:
             assert False, "Unhandled option"
-    return SERVER_MODE
+    return SERVER_MODE, file
 
 
 if __name__ == "__main__":
-    mode = process_args(sys.argv[1:])
-    print(mode)
+    mode, file = process_args(sys.argv[1:])
