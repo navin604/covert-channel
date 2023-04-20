@@ -2,7 +2,7 @@ import socket
 import getopt
 import sys
 from scapy.layers.inet import UDP
-
+from typing import Tuple
 # ADDRESS & PORT are only modified in process_args()
 ADDRESS = "127.0.0.1"
 PORT = 8080
@@ -21,12 +21,16 @@ def main(mode, file):
     else:
         client(file)
 
-def server():
+def server(file):
     pass
 
 
-def client():
-    pass
+def client(file):
+    with open(file, 'r') as f:
+        while True:
+            line = f.readline()
+            if not line: break
+            print(line)
 
 
 def usage():
@@ -37,7 +41,7 @@ def usage():
     print("\t-h  --help   show usage")
 
 
-def process_args(argv):
+def process_args(argv) -> Tuple[bool, str]:
     global ADDRESS
     global PORT
     SERVER_MODE = False
