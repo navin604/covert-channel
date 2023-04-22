@@ -1,12 +1,21 @@
 import socket
 import getopt
 import sys
-from scapy.layers.inet import UDP
+from scapy.layers.inet import UDP, IP
 from typing import Tuple
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+from scapy.volatile import RandIP
+from scapy.all import Raw, send
+
 # ADDRESS & PORT are only modified in process_args()
 ADDRESS = "127.0.0.1"
 PORT = 8080
 
+# Hardcoded key for encrypting/decrypting
+# Not secure, but this is a prototype application using random text so its ok
+key = b'\xac\x19\x08\xf8\x80uo\x0c5\xcb\x82_\xc9\xc0\xdc4Z=\xbf\x19\xf0O\xfa\x94\x0fW\x95\xaf=\xe9U\t'
+iv = b'\xe4\xba\xa2\x06\xf2\xd6U\xef\x15\xcc\xdaY\x95\xf9\xb5;'
 
 def main(mode, file):
     mode_str = "SERVER" if mode else "CLIENT"
@@ -26,11 +35,47 @@ def server(file):
 
 
 def client(file):
+    lines = []
     with open(file, 'r') as f:
         while True:
             line = f.readline()
             if not line: break
-            print(line)
+            lines.append(line.strip())
+    for line in lines:
+        cipher = generate_cipher()
+        encrypted_line = encrypt_line(cipher, line)
+        hex_str = get_hex_string(encrypted_line)
+        for item in hex_str:
+            ascii_data = get_ascii(item)
+            generate_packet(ascii_data)
+
+
+def get_hex_string(encrypted_line):
+    return encrypted_line.hex()
+
+
+def generate_cipher() -> Cipher:
+    return Cipher(algorithms.AES(key), modes.CBC(iv))
+
+
+def encrypt_line(cipher, line) -> bytes:
+    encryptor = cipher.encryptor()
+    padder = padding.PKCS7(128).padder()
+    padded_line = padder.update(line.encode()) + padder.finalize()
+    encrypted_line = encryptor.update(padded_line) + encryptor.finalize()
+    return encrypted_line
+
+
+def generate_packet(data):
+    src_ip = RandIP()
+    ip = IP(src=src_ip, dst=ADDRESS)
+    udp = UDP(sport=data, dport=PORT)
+    pkt = ip/udp/Raw(b"X"*1024)
+    send(pkt, verbose=0)
+
+
+def get_ascii(hex_char) -> int:
+    return ord(hex_char)
 
 
 def usage():
@@ -60,7 +105,7 @@ def process_args(argv) -> Tuple[bool, str]:
         elif o == "--ip":
             ADDRESS = a
         elif o == "--port":
-            PORT = a
+            PORT = int(a)
         elif o == "--file":
             file = a
         else:
