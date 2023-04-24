@@ -38,6 +38,8 @@ def client_config(mode_str):
     print(f"FILE: {file}")
     print(f"ADDRESS: {ADDRESS}")
     print(f"PORT: {PORT}")
+    if ENCRYPT_MODE:
+        print(f"SENDING ENCRYPTED MESSAGES")
     print("----------------")
 
 
@@ -47,6 +49,8 @@ def server_config(mode_str):
     print(f"MODE: {mode_str}")
     print(f"FILE: {file}")
     print(f"PORT: {PORT}")
+    if ENCRYPT_MODE:
+        print(f"EXPECTING TO RECEIVE ENCRYPTED MESSAGES")
     print("----------------")
 
 
@@ -62,12 +66,20 @@ def parse_packet(data, file):
     global hex_data
     # If delimiter received (Ascii of | -> 124, decrypt message)
     if data == 124:
-        decrypt_msg(file)
+        if ENCRYPT_MODE:
+            decrypt_msg(file)
+        else:
+            msg = hex_data
+            reset_hex()
+            # save to file
+            save_msg(msg, file)
         return
     # Convert ascii to character
     hex_byte = get_char(data)
+    print(f"Received: {hex_byte}")
     # Add to hex string
     hex_data += hex_byte
+
 
 def reset_hex():
     """Message has been decrypted, reset hex_data
