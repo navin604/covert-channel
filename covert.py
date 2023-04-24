@@ -11,6 +11,8 @@ from scapy.all import sniff, send
 ADDRESS = "127.0.0.1"
 PORT = 8080
 
+ENCRYPT_MODE = False
+
 # Hardcoded key for encrypting/decrypting msg
 # Not secure, but this is a prototype application using random text so its ok
 key = b'\xac\x19\x08\xf8\x80uo\x0c5\xcb\x82_\xc9\xc0\xdc4Z=\xbf\x19\xf0O\xfa\x94\x0fW\x95\xaf=\xe9U\t'
@@ -111,16 +113,17 @@ def client(file):
             if not line: break
             lines.append(line.strip())
     for line in lines:
-        # Generate cipher and encrypt line
-        cipher = generate_cipher()
-        encrypted_line = encrypt_line(cipher, line)
         print(f"Sending: {line}")
-        print(f"Encrypted format: {encrypted_line}")
+        if ENCRYPT_MODE:
+            # Generate cipher and encrypt line
+            cipher = generate_cipher()
+            encrypted_line = encrypt_line(cipher, line)
+            print(f"Encrypted format: {encrypted_line}")
+            line = get_hex_string(encrypted_line)
         print("--------------------------------------------------------------")
         # Convert byte stream of encrypted line to hex string
-        hex_str = get_hex_string(encrypted_line)
-        for item in hex_str:
-            # for each char in hex string,
+        for item in line:
+            # for each char in string,
             # get ascii code and generate packet
             ascii_data = get_ascii(item)
             generate_packet(ascii_data)
@@ -181,11 +184,10 @@ def usage():
 
 def process_args(argv) -> Tuple[bool, str]:
     """Processes arguments"""
-    global ADDRESS
-    global PORT
+    global ADDRESS, PORT, ENCRYPT_MODE
     SERVER_MODE = False
     try:
-        opts, args = getopt.getopt(argv, "h", ["help", "server", "ip=", "port=", "file="])
+        opts, args = getopt.getopt(argv, "h", ["help", "server", "encrypt", "ip=", "port=", "file="])
     except getopt.GetoptError as err:
         # print help information and exit:
         print(err)  # will print something like "option -a not recognized"
@@ -197,6 +199,8 @@ def process_args(argv) -> Tuple[bool, str]:
             sys.exit()
         elif o == "--server":
             SERVER_MODE = True
+        elif o == "--encrypt":
+            ENCRYPT_MODE = True
         elif o == "--ip":
             ADDRESS = a
         elif o == "--port":
