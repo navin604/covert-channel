@@ -26,7 +26,11 @@ def main(mode, file):
     mode_str = "SERVER" if mode else "CLIENT"
     if mode:
         server_config(mode_str)
-        sniff(filter="udp", prn=lambda p: server(p, file), store=False)
+        try:
+            sniff(filter="udp", prn=lambda p: server(p, file), store=False)
+        except PermissionError:
+            print("Permission error! Run as sudo or admin!")
+            sys.exit()
     else:
         client_config(mode_str)
         client(file)
@@ -178,7 +182,11 @@ def generate_packet(data):
     udp = UDP(sport=data, dport=PORT)
     payload = "******"
     pkt = ip/udp/payload
-    send(pkt, verbose=0)
+    try:
+        send(pkt, verbose=0)
+    except PermissionError:
+        print("Permission error! Run as sudo or admin!")
+        sys.exit()
 
 
 def get_ascii(hex_char) -> int:
@@ -231,7 +239,7 @@ def process_args(argv) -> Tuple[bool, str]:
             file = a
         else:
             assert False, "Unhandled option"
-    if SERVER_MODE:
+    if not SERVER_MODE:
         if len(argv) < 6:
             print("Missing an argument!")
             usage()
