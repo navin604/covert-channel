@@ -119,11 +119,15 @@ def client(file):
     """Process each line of input file in
     preparation for sending"""
     lines = []
-    with open(file, 'r') as f:
-        while True:
-            line = f.readline()
-            if not line: break
-            lines.append(line.strip())
+    try:
+        with open(file, 'r') as f:
+            while True:
+                line = f.readline()
+                if not line: break
+                lines.append(line.strip())
+    except FileNotFoundError:
+        print(f"File does not exist: {file}")
+        sys.exit()
     for line in lines:
         print(f"Sending: {line}")
         if ENCRYPT_MODE:
@@ -142,6 +146,7 @@ def client(file):
         # Send terminator to signal end of str
         terminator = get_ascii("|")
         generate_packet(terminator)
+
 
 def get_hex_string(encrypted_line):
     """ Returns hex string of byte stream (encrypted string)"""
@@ -191,7 +196,12 @@ def usage():
     print(txt)
     print("-------------------------------------------")
     print("usage: python covert.py [options]")
-    print("\t-h  --help   show usage")
+    print("\t-h  --help      show usage")
+    print("\t    --server    set server mode")
+    print("\t    --encrypt   encrypt data mode")
+    print("\t    --ip        target IP")
+    print("\t    --port      target PORT")
+    print("\t    --file      file to read/write")
 
 
 def process_args(argv) -> Tuple[bool, str]:
@@ -221,6 +231,16 @@ def process_args(argv) -> Tuple[bool, str]:
             file = a
         else:
             assert False, "Unhandled option"
+    if SERVER_MODE:
+        if len(argv) < 6:
+            print("Missing an argument!")
+            usage()
+            sys.exit()
+    else:
+        if len(argv) < 5:
+            print("Missing an argument!")
+            usage()
+            sys.exit()
     return SERVER_MODE, file
 
 
